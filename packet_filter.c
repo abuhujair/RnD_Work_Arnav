@@ -66,7 +66,7 @@ int packet_monitor(struct __sk_buff *skb)
     u32 payload_length = ip->tlen - ip_header_length - tcp_header_length;
     u32 total_len = payload_length+payload_offset;
 
-    if (payload_length <= MIN_HTTP_TLEN)
+    if (payload_length <= 0)
         return 0;
 
     char init_payload[MIN_HTTP_TLEN]={0};

@@ -27,20 +27,24 @@ function_skb_matching = bpf.load_func("packet_monitor", BPF.SOCKET_FILTER)
 BPF.attach_raw_socket(function_skb_matching, interface)
 data_map = bpf.get_table('data_map')    # retrieve metric map
 data_map.clear() # delete map entires after printing output. confiremd it deletes values and keys too 
-
+out_data=""
 try:
     print("Ready To Receive\n")
     while True :
         packet_cnt_output = data_map.items()
         output_len = len(packet_cnt_output)
         for i in range(0,output_len):
-            print(packet_cnt_output[i][0].dst_port)
+            temp_data = packet_cnt_output[i][1].data.decode("utf-8")
+            if(temp_data!=out_data):
+                out_data=temp_data
+                print(out_data)            
+                print(packet_cnt_output[i][1].data_len)
+                print("-------------------------------")
+            # print(packet_cnt_output[i][0].dst_port)
             # print(packet_cnt_output[i][0].src_port)
-            print(packet_cnt_output[i][1].data)
             # print(packet_cnt_output[i][1].seq_num)
             # print(packet_cnt_output[i][1].ack_num)
             # print(packet_cnt_output[i][1].count)
-            print(packet_cnt_output[i][1].data_len)
         time.sleep(1)
         
 except KeyboardInterrupt:

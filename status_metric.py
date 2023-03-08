@@ -55,3 +55,13 @@ try:
 except KeyboardInterrupt:
     sys.stdout.close()
     pass
+
+# Foreground 	Background
+# Black 	30 	Black 	40
+# Red 	    31 	Red 	41
+# Green     32 	Green 	42
+# Yellow    33 	Yellow 	43
+# Blue 	    34 	Blue 	44
+# Purple    35 	Purple 	45
+# Cyan 	    36 	Cyan 	46
+# White     37 	White 	47

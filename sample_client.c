@@ -5,46 +5,46 @@
 void send_data(int sock){
 
     char buf[MAX_BUFFER_SIZE];
-    // const char *strings [6] = {"name","my","name","is","DaVinci","stop"};
-    // for(int i=0;i<6;i++){
-    //     bzero(buf,MAX_BUFFER_SIZE);
-    //     strcpy(buf,strings[i]);
-    //     write(sock,buf,strlen(buf));
-    //     printf("sent : %s\n",buf);
-    //     bzero(buf,MAX_BUFFER_SIZE);
-    //     read(sock,buf,sizeof(buf));
-    //     printf("received : %s\n",buf);
-    // }
-    int test_count =10;
-    time_t t;
-    srand((unsigned) time(&t));   
-    int ok_count=0;
-    int nf_count=0; 
-    for(int i=0;i<test_count;i++){
-        int itr= rand()%h_count;
-        if(itr==1)
-            ok_count++;
-        else if(itr==2)
-            nf_count++;
-
+    const char *strings [6] = {"Hello\t","my\t","name\t","is\t","DaVinci\t","stop"};
+    for(int i=0;i<6;i++){
         bzero(buf,MAX_BUFFER_SIZE);
-        strcpy(buf,headers[itr]);
+        strcpy(buf,strings[i]);
         write(sock,buf,strlen(buf));
         printf("sent : %s\n",buf);
         bzero(buf,MAX_BUFFER_SIZE);
         read(sock,buf,sizeof(buf));
-        // printf("received : %s\n",buf);
+        printf("received : %s\n",buf);
     }
+    // int test_count =10;
+    // time_t t;
+    // srand((unsigned) time(&t));   
+    // int ok_count=0;
+    // int nf_count=0; 
+    // for(int i=0;i<test_count;i++){
+    //     int itr= rand()%h_count;
+    //     if(itr==1)
+    //         ok_count++;
+    //     else if(itr==2)
+    //         nf_count++;
 
-    printf("Total OK :%d \nTotal Not Found:%d\n",ok_count,nf_count);
+    //     bzero(buf,MAX_BUFFER_SIZE);
+    //     strcpy(buf,headers[itr]);
+    //     write(sock,buf,strlen(buf));
+    //     printf("sent : %s\n",buf);
+    //     bzero(buf,MAX_BUFFER_SIZE);
+    //     read(sock,buf,sizeof(buf));
+    //     // printf("received : %s\n",buf);
+    // }
 
-    const char * str1 = "stop";
-    bzero(buf,MAX_BUFFER_SIZE);
-    strcpy(buf,str1);
-    write(sock,buf,strlen(buf));
-    // printf("sent : %s\n",buf);
-    bzero(buf,MAX_BUFFER_SIZE);
-    read(sock,buf,sizeof(buf));
+    // printf("Total OK :%d \nTotal Not Found:%d\n",ok_count,nf_count);
+
+    // const char * str1 = "stop";
+    // bzero(buf,MAX_BUFFER_SIZE);
+    // strcpy(buf,str1);
+    // write(sock,buf,strlen(buf));
+    // // printf("sent : %s\n",buf);
+    // bzero(buf,MAX_BUFFER_SIZE);
+    // read(sock,buf,sizeof(buf));
     // printf("received : %s\n",buf);
 }   
 

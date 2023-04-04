@@ -1,0 +1,208 @@
+#include <uapi/linux/ptrace.h>
+#include <net/sock.h>
+#include <bcc/proto.h>
+#include <linux/bpf.h>
+
+#define IP_TCP 6
+#define IP_UDP 17
+#define IP_ICMP 1
+#define ETH_HLEN 14
+#define MAX 100
+#define MIN_HTTP_TLEN 50
+#define OK_STATUS 200
+#define NOT_FOUND_STATUS 404
+enum state {GRAB_HLEN,GRAB_ID,GRAB_DATA};
+
+struct program_state_key
+{
+    u32 src_ip;              // source ip
+    unsigned short src_port; // destination port
+};
+
+struct program_state
+{
+    u32 c_len;
+    u32 p_len;
+    enum state ps;
+    u32 lsn;
+    u32 msn_set[10];
+};
+
+struct data_key{
+    u8 id;
+};
+
+struct data_metric{
+    u32 count;
+    u32 max_value;
+    u32 min_value;
+};
+
+BPF_PERF_OUTPUT(skb_events);
+
+BPF_HASH(ps_map, struct program_state_key, struct program_state, 5);
+// BPF_HASH(data_map, struct data_key, struct data_metric, 100);
+
+
+int packet_monitor(struct __sk_buff *skb)
+{
+    u8 *cursor = 0;
+    struct ethernet_t *ethernet = cursor_advance(cursor, sizeof(*ethernet));
+
+    struct ip_t *ip = cursor_advance(cursor, sizeof(struct ip_t));
+
+    // calculate ip header length
+    // value to multiply * 4
+    // e.g. ip->hlen = 5 ; IP Header Length = 5 x 4 byte = 20 byte
+
+    u32 ip_header_length = ip->hlen << 2; // Shift left 2 -> *4 multiply
+
+    if (ip_header_length < sizeof(struct ip_t)){
+        return 0;
+    }
+    if (ip->nextp != IP_TCP){
+        return 0;
+    }
+
+    // shift cursor forward for dynamic ip header size
+    void *_ = cursor_advance(cursor, (ip_header_length - sizeof(struct ip_t)));
+
+    struct tcp_t *tcp = cursor_advance(cursor, sizeof(struct tcp_t));
+    if (tcp->src_port != 15100)
+        return 0;
+
+    u32 tcp_header_length = tcp->offset << 2;
+    u32 payload_offset = ETH_HLEN + ip_header_length + tcp_header_length;
+    u32 payload_length = ip->tlen - ip_header_length - tcp_header_length;
+    u32 total_len = payload_length+payload_offset;
+
+    if (payload_length <= MIN_HTTP_TLEN)
+        return 0;
+
+    // bpf_trace_printk("Function Packet_monitor called\n");
+    struct program_state_key ps_k = {
+        .src_port = 0,
+        .src_ip = 0
+    };
+    
+    ps_k.src_port = tcp->src_port;
+    ps_k.src_ip = ip->src;
+
+    // get to knoew pacet is http or not 
+    // if http or POST
+    char init_payload[MIN_HTTP_TLEN]={0};
+    int init_payload_itr=0;
+    int i = 0;
+
+    struct program_state *ps = ps_map.lookup(&ps_k);
+    if(ps){
+
+    }
+    else{
+
+        for(i=payload_offset;i<total_len;i++){
+            init_payload[init_payload_itr] = (char)load_byte(skb,i);
+            if(init_payload[init_payload_itr]=='\r'){
+                break;
+            }
+            init_payload_itr++;
+            if(init_payload_itr==MIN_HTTP_TLEN)
+                break;
+        }    
+        // get the last read byte 
+        payload_offset = i;
+
+        // HTTP /2   XXX
+        // 1234 56 7 ---
+        init_payload_itr=0;
+        if(init_payload[0]=='H' && init_payload[1]=='T' && init_payload[2]=='T' && init_payload[3]=='P'){
+            init_payload_itr=4;
+
+            // get to first ' '
+            while(init_payload[init_payload_itr]!=' ' && init_payload_itr < MIN_HTTP_TLEN){
+                init_payload_itr++;
+            }
+
+            //for the ' '
+            init_payload_itr++;
+
+            int status=0;
+            // get the next 3 characters
+            while(init_payload[init_payload_itr]!=' ' && init_payload_itr < MIN_HTTP_TLEN){
+                status = status*10+(init_payload[init_payload_itr]-'0');
+                init_payload_itr++;
+            }
+            
+            if(status==OK_STATUS){
+
+                struct program_state ps ={
+                    .c_len=0,
+                    .p_len=0,
+                    .ps=GRAB_HLEN,
+                    .lsn=0,
+                    .msn_set={0}
+                };
+
+                char c = '\0';
+                int endl_cnt=0;
+                char str [14] = {'C','o','n','t','e','n','t','-','L','e','n','g','t','h'};
+                int str_len = 14;
+                int itr=0;
+                int get_val=0;
+                u16 content_len=0;
+                ps.lsn =  tcp->seq_num;
+                u8 bool = 1; // 0 for no match 1 for match
+
+
+                for(i=payload_offset;i<total_len;i++){
+
+                    c = (char)load_byte(skb,i);
+                        switch (c)
+                        {
+                        case ':':
+                            endl_cnt=0;  
+                            bool=1;
+                            // for(itr=0;itr<=init_payload_itr && itr<str_len;itr++){
+                            //     if(str[itr]==init_payload[itr]){
+                            //         bool=1;
+                            //     }
+                            //     else{
+                            //         bool = 0;
+                            //         break;
+                            //     }
+                            // }
+                            if(bool==1 && itr==str_len){
+                                get_val=1;
+                                init_payload_itr=0;
+                            }
+                            break;
+                        case '\r':
+                            if(get_val==1){
+                                content_len=0;
+                                for(itr=0;itr<=init_payload_itr;itr++){
+                                    content_len = content_len*10 + (init_payload[init_payload_itr]-'0');
+                                }
+                                ps.c_len = content_len;
+                                ps.ps = GRAB_ID;
+                            }
+                            else{
+                                endl_cnt++;
+                                init_payload_itr=0;
+                            }
+                            break;
+                        default:                            
+                            endl_cnt=0;  
+                            init_payload[init_payload_itr]=c;
+                            init_payload_itr++;
+                            if(init_payload_itr==MIN_HTTP_TLEN)
+                                init_payload_itr=0;
+                            break;
+                        }
+                    }
+                ps_map.lookup_or_try_init(&ps_k, &ps);
+            }
+        }
+    }
+    return 0;
+}
+

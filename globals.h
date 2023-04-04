@@ -7,5 +7,5 @@
 #include <sys/socket.h>
 #include <unistd.h> // read(), write(), close()
 
-#define MAX_BUFFER_SIZE 100 
+#define MAX_BUFFER_SIZE 600
 #define PORT 15100

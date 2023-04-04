@@ -18,14 +18,14 @@ struct Key
     u32 dst_ip;              // destination ip
     unsigned short src_port; // source port
     unsigned short dst_port; // destination port
+    u32 seq_num;
+    u32 ack_num;
 };
 
 struct Value
 {
     u16 data_len;
     char data[MAX];
-    u32 seq_num;
-    u32 ack_num;
     int count;
 };
 
@@ -66,54 +66,32 @@ int packet_monitor(struct __sk_buff *skb)
     u32 payload_length = ip->tlen - ip_header_length - tcp_header_length;
     u32 total_len = payload_length+payload_offset;
 
-    if (payload_length <= 0)
+    if (payload_length <= 10)
         return 0;
-
-    char init_payload[MIN_HTTP_TLEN]={0};
-    int init_payload_itr=0;
-    int i = 0;
-    for(i=payload_offset;i<total_len;i++){
-        init_payload[init_payload_itr] = (char)load_byte(skb,i);
-        init_payload_itr++;
-        if(init_payload_itr==MIN_HTTP_TLEN)
-            break;
-    }    
-
-    // HTTP /2   XXX
-    // 1234 56 7 ---
-    init_payload_itr=0;
-    if(init_payload[0]=='H' && init_payload[1]=='T' && init_payload[2]=='T' && init_payload[3]=='P'){
-        init_payload_itr=4;
-
-        // get to first ' '
-        while(init_payload[init_payload_itr]!=' ' && init_payload_itr < MIN_HTTP_TLEN){
-            init_payload_itr++;
-        }
-
-        //for the ' '
-        init_payload_itr++;
-
-    }
+    
+    bpf_trace_printk("CheckPoint :payload_len\n");
 
     struct Key k = {
         .src_ip = 0,
         .dst_ip = 0,
         .src_port = 0,
-        .dst_port = 0
+        .dst_port = 0,
+        .seq_num =0,
+        .ack_num =0
     };
     k.dst_ip = ip->dst;
     k.src_ip = ip->src;
     k.dst_port = tcp->dst_port;
     k.src_port = tcp->src_port;
+    k.seq_num = tcp->seq_num;
+    k.ack_num = tcp->ack_num;
 
     struct Value *v = data_map.lookup(&k);
     u16 data_itr=0;
-
+    int i=0;
     if (v)
     {   
-        if((v->seq_num != tcp->seq_num) && (v->ack_num != tcp->ack_num) ){
-            v->seq_num = tcp->seq_num;
-            v->ack_num = tcp->ack_num;
+        // if((v->seq_num != tcp->seq_num) && (v->ack_num != tcp->ack_num) ){
             data_itr = v->data_len;
             for(i=payload_offset;i<total_len && ((data_itr + (i-payload_offset)) < MAX);i++){
                 v->data[data_itr+(i-payload_offset)] = (char)load_byte(skb,i);
@@ -121,21 +99,17 @@ int packet_monitor(struct __sk_buff *skb)
             v->count++;
             v->data_len = data_itr+(i-payload_offset);        
 
-        }
+        // }
         return 0;
     }
     
     struct Value v_new = {
         .data_len=0,
         .data={0},
-        .seq_num=0,
-        .ack_num=0,
         .count=0
     };
 
     data_itr=0;
-    v_new.seq_num = tcp->seq_num;
-    v_new.ack_num = tcp->ack_num;
     v_new.count = 1;
     for(i=payload_offset;i<total_len;i++){
         v_new.data[data_itr] = (char)load_byte(skb,i);

@@ -9,12 +9,8 @@ int maintain_connection(int conn){
         int num_byte_received = read(conn,buf,sizeof(buf));
         printf("received %d byte value : %s\n", num_byte_received,buf);
 
-        if(strcmp(buf,"stop")==0 || num_byte_received==0)
-            close_conn=1;
+        sleep(1);
 
-        bzero(buf,MAX_BUFFER_SIZE);
-        snprintf(buf,MAX_BUFFER_SIZE,"%d",num_byte_received);
-        // sleep(1);
         write(conn,buf,sizeof(buf));
         printf("sent : %s\n",buf);
     }

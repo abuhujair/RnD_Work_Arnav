@@ -12,7 +12,10 @@
 #define OK_STATUS 200
 #define NOT_FOUND_STATUS 404
 #define MAX_LEN 50
-#define Con_len 13
+// #define Attribute_Len 14
+#define Attribute_Len 5
+// #define delimeter_character '\r'
+#define delimeter_character ','
 
 enum state
 {
@@ -45,6 +48,7 @@ BPF_HASH(ps_map, struct program_state_key, struct data_key, 5);
 
 int packet_monitor(struct __sk_buff *skb)
 {
+    bpf_trace_printk("\n\n--------------Func Start-----------");
     __u8 *cursor = 0;
     struct ethernet_t *ethernet = cursor_advance(cursor, sizeof(struct ethernet_t));
 
@@ -89,11 +93,12 @@ int packet_monitor(struct __sk_buff *skb)
     long status;
     char local_data[305] = {0};
     const unsigned int local_data_limit = 300;
-    int data_itr =0 ;
+    // int data_itr =0 ;
     int i =0;
     char flag = '0';
-    int j_val;
-    char arr [] = {'C','o','n','t','e','t','-','L','e','n','g','t','h'};
+    int j_val =0;
+    // char arr [] = {'C','o','n','t','e','n','t','-','L','e','n','g','t','h'};
+    char arr [] = {'\'','i','d','\'',':'};
     for(i=0;i<5;i++){
 
         if(payload_length < local_data_limit)
@@ -103,9 +108,9 @@ int packet_monitor(struct __sk_buff *skb)
         if(status !=0 )
             goto EXIT;    
 
-        for(int j=0;j<(local_data_limit-Con_len);j++){
+        for(int j=0;j<(local_data_limit-Attribute_Len);j++){
             flag='0';
-            for(int k=0;k<Con_len ;k++){
+            for(int k=0;k<Attribute_Len ;k++){
                 if(arr[k]==local_data[j+k])
                     flag='1';
                 else{
@@ -114,7 +119,7 @@ int packet_monitor(struct __sk_buff *skb)
                 }
             }
             if(flag=='1'){
-                j_val=j+Con_len+1;
+                j_val=payload_offset+j+Attribute_Len;
                 break;
             }
         }
@@ -128,8 +133,8 @@ int packet_monitor(struct __sk_buff *skb)
     int k=0;
 
     if(flag=='0'){
-        for(i=payload_offset;i<(total_len-Con_len);i++){
-            for(int k=0;k<Con_len ;k++){
+        for(i=payload_offset;i<(total_len-Attribute_Len)&&i<local_data_limit;i++){
+            for(int k=0;k<Attribute_Len ;k++){
                 char c = load_byte(skb,i+k);
                 if(arr[k]==c)
                     flag='1';
@@ -139,7 +144,7 @@ int packet_monitor(struct __sk_buff *skb)
                 }
             }
             if(flag=='1'){
-                j_val = i+Con_len;
+                j_val = payload_offset+i+Attribute_Len;
                 break;
             }
         }
@@ -147,6 +152,12 @@ int packet_monitor(struct __sk_buff *skb)
 
     bpf_trace_printk("CheckPoint :SKB data"); 
 
+    if(flag=='0'){
+        bpf_trace_printk("CheckPoint :Attribute Not Found");
+        goto EXIT;
+    }
+
+    bpf_trace_printk("CheckPoint :Attribute Found");
     struct program_state_key ps_k = {
         .src_port = 0,
         .src_ip = 0};
@@ -158,10 +169,12 @@ int packet_monitor(struct __sk_buff *skb)
     if (d)
     {
         bpf_trace_printk("CheckPoint :data");
-
-        for(int i=0;i<MAX_LEN;i++){
-            d->data[data_itr]=(char)local_data[i];
-            data_itr++;
+        // max len of the attribute
+        for(int i=0;i<10;i++){
+            char c=(char)load_byte(skb,(j_val+i));
+            if(c==delimeter_character)
+                break;
+            d->data[i] = c;
         }
 
         goto EXIT;
@@ -172,13 +185,16 @@ int packet_monitor(struct __sk_buff *skb)
     
     bpf_trace_printk("CheckPoint :New Data");
 
-    for(int i=0;i<MAX_LEN;i++){
-        d_new.data[data_itr]=(char)local_data[i];
-        data_itr++;
+    for(int i=0;i<10;i++){
+        char c=(char)load_byte(skb,(j_val+i));
+        if(c==delimeter_character)
+            break;        
+        d_new.data[i] = c;
     }
 
     ps_map.lookup_or_try_init(&ps_k, &d_new);
 
 EXIT:
+    bpf_trace_printk("--------------Func End-----------\n\n");
     return 0;
 }

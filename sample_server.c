@@ -14,7 +14,6 @@ int maintain_connection(int conn){
         write(conn,buf,sizeof(buf));
         printf("sent : %s\n",buf);
     }
-    close(conn);
 }
 
 

@@ -15,7 +15,7 @@ void send_data(int sock){
     //     read(sock,buf,sizeof(buf));
     //     printf("received : %s\n",buf);
     // }
-    int test_count =1;
+    int test_count =4;
     time_t t;
     srand((unsigned) time(&t));   
     int ok_count=0;
@@ -33,10 +33,10 @@ void send_data(int sock){
         printf("sent : %s\n",buf);
         bzero(buf,MAX_BUFFER_SIZE);
         read(sock,buf,sizeof(buf));
-        // printf("received : %s\n",buf);
+        printf("received : %s\n",buf);
     }
 
-    printf("Total OK :%d \nTotal Not Found:%d\n",ok_count,nf_count);
+    // printf("Total OK :%d \nTotal Not Found:%d\n",ok_count,nf_count);
 
     // const char * str1 = "stop";
     // bzero(buf,MAX_BUFFER_SIZE);
@@ -60,7 +60,7 @@ void establish_connection(uint16_t port , int * server_sock){
 
     bzero(&server,sizeof(server));
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = inet_addr("10.96.16.17");
+    server.sin_addr.s_addr = inet_addr("192.168.0.106");
     server.sin_port= htons(port);
     if(connect(sock,(struct sockaddr*)&server,sizeof(server))!=0){
         perror("CONNECT STAGE");

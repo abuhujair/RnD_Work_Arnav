@@ -12,7 +12,7 @@ Access-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Origin:
 Keep-Alive: timeout=5, max=100\r\n \
 Connection: Keep-Alive\r\n \
 Content-Type: application/json\r\n\r\n \
-[{'id':122,'age':29,'name':'Da Vinchi'}]",
+[{\"id\":122,'age':29,'name':'Da Vinchi'}]",
 
 "HTTP/1.1 200 OK\r\n \
 Date: Tue, 04 Apr 2023 13:58:37 GMT\r\n \
@@ -26,7 +26,7 @@ Access-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Origin:
 Keep-Alive: timeout=5, max=100\r\n \
 Connection: Keep-Alive\r\n \
 Content-Type: application/json\r\n\r\n \
-[{'id':123,'age':29,'name':'Da Vinchi'}]",
+[{\"id\":123,'age':29,'name':'Da Vinchi'}]",
 
 "HTTP/1.1 200 OK\r\n \
 Date: Tue, 04 Apr 2023 13:58:37 GMT\r\n \
@@ -40,7 +40,7 @@ Access-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Origin:
 Keep-Alive: timeout=5, max=100\r\n \
 Connection: Keep-Alive\r\n \
 Content-Type: application/json\r\n\r\n \
-[{'id':124,'age':29,'name':'Da Vinchi'}]",
+[{\"id\":124,'age':29,'name':'Da Vinchi'}]",
 
 "HTTP/1.1 200 OK\r\n \
 Date: Tue, 04 Apr 2023 13:58:37 GMT\r\n \
@@ -54,5 +54,5 @@ Access-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Origin:
 Keep-Alive: timeout=5, max=100\r\n \
 Connection: Keep-Alive\r\n \
 Content-Type: application/json\r\n\r\n \
-[{'id':125,'age':29,'name':'Da Vinchi'}]"
+[{\"id\":125,'age':29,'name':'Da Vinchi'}]"
 };

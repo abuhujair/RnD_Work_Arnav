@@ -1,3 +1,15 @@
+
+
+/*Todo :
+
+1. Set the HTTP CHECK  -- DONE
+2. multi-packet json data traversal
+3. replace string repacement with optimized one .
+4. Include request based save  -- 
+5. optimal hopping in payload to reach the required attribute fast using some statistics of the payload.
+
+*/ 
+
 #include <uapi/linux/ptrace.h>
 #include <net/sock.h>
 #include <bcc/proto.h>
@@ -242,6 +254,24 @@ int packet_monitor_id(struct __sk_buff *skb)
     int i =0;
     char flag = '0';
     int j_val =0;
+    
+    status = bpf_skb_load_bytes(skb,payload_offset,local_data,15);
+    if(status !=0 )
+        goto EXIT;    
+
+
+    char http_check_string []  =  {'H','T','T','P','/','1','.','1',' ','2','0','0',};
+    for(i=0;i<12;i++){
+        if(local_data[i]!=http_check_string[i])
+            break;
+    }    
+
+    //http Fail    
+    if(i!=12){
+        goto EXIT;
+    }
+
+    bpf_trace_printk("CheckPoint :HTTP ok");
 
     for(i=0;i<5;i++){
 
@@ -343,3 +373,4 @@ EXIT:
     bpf_trace_printk("--------------Func End-----------\n\n");
     return 0;
 }
+

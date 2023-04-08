@@ -5,6 +5,6 @@ if [ "$1" = "" ]; then
 fi
 for ((i=1;i<=$1;i++));
 do 
-    curl http://192.168.0.102/get_id_info.php 
+    curl http://10.96.13.87/get_id_info.php 
     echo " "
 done

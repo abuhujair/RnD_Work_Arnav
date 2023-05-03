@@ -23,9 +23,11 @@ OUTPUT_INTERVAL = 1
 bpf = BPF(src_file = "status_metric.c",debug = 0)
 
 function_skb_matching = bpf.load_func("packet_monitor", BPF.SOCKET_FILTER)
-
 BPF.attach_raw_socket(function_skb_matching, interface)
+
+
 metric_map = bpf.get_table('metric_map')    # retrieve metric map
+
 metric_map.clear() # delete map entires after printing output. confiremd it deletes values and keys too 
 ok_count=0
 nf_count=0

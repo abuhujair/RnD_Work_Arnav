@@ -124,7 +124,7 @@ You can access it by typing `http://test.com` in your browser's address bar.
     Apache/2.4.52 (Ubuntu) Server at test.com Port 80
     ```
 
-    Give recurive permission as follows:
+    Give recursive permission as follows:
     ```
     sudo chmod +x /path/
     sudo chmod +x /path/to/

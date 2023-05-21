@@ -1,4 +1,15 @@
-To Run 
+# R&D Work
 
+## Payload Metric Grabber
 
-$ sudo -HE env PYTHONPATH=$PYTHONPATH python3 payload_metric_grabber.py lo
+1. Initiate instance of Webserver as per instruction given in [Test_web](/Test_web)
+
+2. Load eBPF Program [payload_metric_grabber.py](/payload_metric_grabber/payload_metric_grabber.py)
+    
+    ```
+    sudo ./payload_metric_grabber.py [option]
+    ```
+3. Open a new terminal and run the test script [test script](/payload_metric_grabber/test.sh).
+    ```
+    ./test.sh [number_of_requests]
+    ```

@@ -17,7 +17,7 @@ class Id_data{
 
     $name_list = array("John Wick","Alan Tuning","Grace Hopper","Marie Curie","Albert Einstien","Issac Newton","Richard Fynmen","Ramanujan","CV Raman");
     $data = new Id_data();
-    $data->rstr = generateRandomString(2000);
+    $data->rstr = generateRandomString(1500);
     $data->id = rand(1000,1200);
     $data->name = $name_list[rand(1,8)];
     $data->age = rand(10,100);

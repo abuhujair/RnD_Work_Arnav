@@ -19,6 +19,10 @@ async function populate() {
     elem = document.createElement("h5");
     elem.innerHTML = "Age : " + data.age;
     body.appendChild(elem);
+
+    elem = document.createElement("h5");
+    elem.innerHTML = "Random String : " + data.rstr;
+    body.appendChild(elem);
 }
   
 populate();

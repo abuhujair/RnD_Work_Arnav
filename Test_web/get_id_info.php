@@ -9,6 +9,7 @@ class Id_data{
     }
     function generateRandomString($length = 1000) {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        // $characters = 'H';
         $charactersLength = strlen($characters);
         $randomString = '';
         for ($i = 0; $i < $length; $i++) {
@@ -19,7 +20,7 @@ class Id_data{
 
     $name_list = array("John Wick","Alan Tuning","Grace Hopper","Marie Curie","Albert Einstien","Issac Newton","Richard Fynmen","Ramanujan","CV Raman");
     $data = new Id_data();
-    $data->rstr = generateRandomString(500);
+    $data->rstr = generateRandomString(rand(20,5000));
     $data->id = rand(1000,1200);
     $data->name = $name_list[rand(1,8)];
     $data->age = rand(10,100);

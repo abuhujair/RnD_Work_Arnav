@@ -1,19 +1,14 @@
 #!/usr/bin/python3
 
-from bcc import BPF
-import time
-import sys
+from __future__ import print_function
+from typing import Any
 import ctypes as ct
-import os
 
-# Loading Functions from eBPF code
+from bcc import BPF
+from bcc.utils import printb
+
+# Load eBPF code
 bpf = BPF(src_file = "extended_metric_grabber.c",debug = 0)
-packet_monitor = bpf.load_func("packet_monitor", BPF.SOCKET_FILTER)
-packet_parser = bpf.load_func("packet_header_parser", BPF.SOCKET_FILTER)
-
-# Program Array for Tail-Call
-prog_array = bpf.get_table("prog_array")
-prog_array[ct.c_int(2)] = ct.c_int(packet_parser.fd)
 
 # User Metric Map
 # Struct Definition
@@ -23,7 +18,7 @@ class MetricKey(ct.Structure):
     _fields_ = [
         ("src_port", ct.c_uint16)
     ]
-class MetricData(ct.LittleEndianStructure):
+class MetricData(ct.Structure):
     _pack_ = 1
     _fields_ = [
         ("tag", ct.c_char*TAG_LENGTH),
@@ -53,9 +48,32 @@ mData = MetricData(tag,calculateLPS(tag))
 user_metric = bpf["user_metric"]
 user_metric[mKey] = mData
 
-BPF.attach_raw_socket(packet_monitor, "lo")
+# Load Functions
+tcp_header_parser = bpf.load_func("tcp_header_parser", BPF.SOCKET_FILTER)
+http_payload_parser = bpf.load_func("http_payload_parser", BPF.SOCKET_FILTER)
 
+# Program Array for Tail-Call
+prog_array = bpf.get_table("prog_array")
+prog_array[ct.c_int(2)] = ct.c_int(http_payload_parser.fd)
 
+BPF.attach_raw_socket(tcp_header_parser, "lo")
+
+print("Message:")
+# format output
+st = ""
+
+while 1:
+    try:
+        (task, pid, cpu, flags, ts, msg) = bpf.trace_fields()
+        if len(msg)!=2:
+            # print((bytes.fromhex(st)).decode('utf-8'))
+            printb(b"%s" % (msg))
+            # st = ""
+        else:
+            pass
+            # st += msg.decode('utf-8')
+    except KeyboardInterrupt:
+        exit()
 
 
 
